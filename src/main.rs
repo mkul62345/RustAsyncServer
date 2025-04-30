@@ -27,7 +27,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(hello_handler))
-        .nest_service("/pic", ServeDir::new("assets/lilnas.jpg"))
+        .nest_service("/pic", ServeDir::new("assets/tba.png"))
         .nest_service("/text", ServeDir::new("assets/dror.txt"))
         .nest_service("/vid", ServeDir::new("assets/helooks.mp4"));
 
