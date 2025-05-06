@@ -11,6 +11,10 @@ pub enum Error{
 
 	// Model Errors  | TODO: Refactor into model layer
 	TicketDeleteFailIdNotFound { id: u64},
+
+	// Auth Errors
+	AuthFailNoAuthTokenCookie,
+	AuthFailTokenWrongFormat,
 }
 
 

@@ -40,10 +40,13 @@ async fn main() -> Result<()> {
 
     let mc = ModelController::new().await?;
 
+    let routes_apis = web::routes_tickets::routes(mc.clone())
+ 		.route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
+    
     let app = Router::new()
+        .merge(web::routes_hello::routes())
         .merge(web::routes_login::routes())
-        .nest("/api", web::routes_hello::routes())
-        .nest("/api", web::routes_tickets::routes(mc.clone()))
+        .nest("/api", routes_apis)
         .nest_service("/pic", ServeDir::new("assets/tba.png"))
         .nest_service("/text", ServeDir::new("assets/dror.txt"))
         .nest_service("/vid", ServeDir::new("assets/helooks.mp4"))
