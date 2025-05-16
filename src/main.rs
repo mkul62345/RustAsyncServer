@@ -23,6 +23,7 @@ use serde_json::json;
 use serde::Deserialize;
 
 
+mod ctx;
 mod model;
 mod web;
 mod error;
@@ -51,6 +52,10 @@ async fn main() -> Result<()> {
         .nest_service("/text", ServeDir::new("assets/dror.txt"))
         .nest_service("/vid", ServeDir::new("assets/helooks.mp4"))
         .layer(middleware::map_response(main_response_mapper))
+        .layer(middleware::from_fn_with_state(
+            mc.clone(),
+            web::mw_auth::mw_ctx_resolver,
+        ))
         .layer(CookieManagerLayer::new())
         .fallback_service(ServeDir::new("./assets/missing.jpg"));
         
