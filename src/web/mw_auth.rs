@@ -21,8 +21,6 @@ pub async fn mw_require_auth(
 
     ctx?;
 
-    // TODO: Token validation
-
     Ok(next.run(req).await)
 }
 
@@ -67,7 +65,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Ctx {
     type Rejection = Error;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-		//println!("->> {:<12} - Ctx", "EXTRACTOR");
+		println!("->> {:<12} - Ctx", "EXTRACTOR");
 
 		parts
 			.extensions
@@ -78,6 +76,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Ctx {
 
 }
 
+//Currently parsed using a regex pattern
 fn parse_token(token: String) -> Result<(u64, String, String)> {
     let (_whole, user_id, exp, sign) = regex_captures!(
         r#"user-(\d+)\.(.+)\.(.+)"#, // Pattern

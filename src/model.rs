@@ -2,8 +2,6 @@ use crate::{ctx::Ctx, Error, Result};
 use serde::{Serialize, Deserialize};
 use std::sync::{Arc, Mutex};
 
-
-
 // region: Tickets
 #[derive(Clone, Debug, Serialize)]
 pub struct Ticket{
@@ -16,10 +14,9 @@ pub struct Ticket{
 pub struct TicketForCreate {
     pub title: String,
 }
-
 // endregion : Tickets
 
-// region: Model Controller
+// region : Model Controller
 #[derive(Clone)]
 pub struct ModelController {
     // TODO:  change into proper DB connection / sqlx
@@ -33,7 +30,6 @@ impl ModelController {
     }
     
 }
-
 
 // CRUD Impl
 impl ModelController{
@@ -75,6 +71,4 @@ impl ModelController{
     }
 
 }
-
-
 // endregion : Model Controller
