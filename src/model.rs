@@ -1,6 +1,7 @@
 use crate::{ctx::Ctx, Error, Result};
 use serde::{Serialize, Deserialize};
 use std::sync::{Arc, Mutex};
+use crate::config::config;
 
 // region: Tickets
 #[derive(Clone, Debug, Serialize)]
@@ -20,6 +21,12 @@ pub struct TicketForCreate {
 #[derive(Clone)]
 pub struct ModelController {
     // TODO:  change into proper DB connection / sqlx
+    /*
+    let pool = PgPoolOptions::new(&config().DB_CONNECTION_STRING)
+        .max_connections(5)
+        .connect(config).await?;
+    
+     */
     tickets_storage: Arc<Mutex<Vec<Option<Ticket>>>>,
 }
 
@@ -39,7 +46,6 @@ impl ModelController{
         ticket_fc: TicketForCreate,
     ) -> Result<Ticket>{
         let mut store = self.tickets_storage.lock().unwrap();
-
         let id = store.len() as u64; //Sequentially increment the id by 1. FIXME: Predictable ID : OWASP api vulnerability
         let ticket = Ticket {
             id,

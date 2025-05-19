@@ -1,12 +1,19 @@
 #![allow(unused)] // Temporary
 pub use self::error::{Error, Result};
+pub use config::config; 
 
+use tracing::{info, debug};
 use crate::ctx::Ctx;
 use axum::http::{Method, Uri};
 use log::log_request;
 use std::net::SocketAddr;
 use axum::{
-    extract::{Path, Query}, middleware, response::{Html, IntoResponse, Response}, routing::{get, get_service, Route}, Json, Router
+    extract::{Path, Query},
+    middleware, 
+    response::{Html, IntoResponse, Response},
+    routing::{get, get_service, Route},
+    Json, 
+    Router
 };
 use model::ModelController;
 use tokio::net::TcpListener;
@@ -21,11 +28,13 @@ use serde_json::json;
 use serde::Deserialize;
 use uuid::Uuid;
 
+mod config;
 mod log;
 mod ctx;
 mod model;
 mod web;
 mod error;
+mod _dev_utils;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -37,6 +46,13 @@ async fn main() -> Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+
+    ////////////    FOR DEVELOPMENT ONLY
+    _dev_utils::init_dev().await;
+
+
+    ////////////    FOR DEVELOPMENT ONLY
 
     let mc = ModelController::new().await?;
 
@@ -67,8 +83,8 @@ async fn main() -> Result<()> {
 
 async fn serve(app: Router, port: u16) {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    let listener = TcpListener::bind(addr).await.unwrap();
+    info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app.layer(TraceLayer::new_for_http()))
         .await
         .unwrap();

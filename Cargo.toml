@@ -19,5 +19,6 @@ lazy-regex = "3.4.1"
 uuid = { version = "1.16.0", features = ["v4", "fast-rng"] } 
 strum_macros = "0.27.1"
 serde_with = "3.12.0"
+sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-native-tls", "postgres", "derive", "uuid", "time"] }
 
  

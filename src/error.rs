@@ -3,12 +3,17 @@ use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
 use serde::Serialize;
 
+use crate::model;
+
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Clone, Serialize, strum_macros::AsRefStr)]
 #[serde(tag = "type", content = "data")]
 pub enum Error{
     LoginFail,
+
+	// Initialization Errors
+	ConfigMissingEnv{ var: &'static str},
 
 	// Auth Errors
 	AuthFailNoAuthTokenCookie,
@@ -17,6 +22,10 @@ pub enum Error{
 
 	// Model Errors  | TODO: Refactor into model layer
 	TicketDeleteFailIdNotFound { id: u64},
+
+
+	// Modules
+	//Model(model::Error),
 }
 
 impl IntoResponse for Error {
