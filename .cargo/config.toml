@@ -1,0 +1,5 @@
+[env]
+
+## -- Secrets
+
+SERVICE_DB_URL= "postgres://pg:pg@localhost/app_db"

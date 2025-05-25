@@ -1,28 +1,23 @@
-routes_tickets.rs:
+mw_auth has commented out blocks due to breakage
 
-    //TODO: Add filter-by to ticket display
-    //TODO: Consider expanding the ticket API
-
-routes_login.rs :
-
-    // TODO: Swap out the if for auth against db connection
-    // TODO: Replace with real token generation
-
-mw_auth.rs     :
-
-    // TODO: Parse token properly from cookie 
-    // TODO: Token components validations.
-
-model.rs:
-
-    // TODO: change into proper DB connection / sqlx 
-    // TODO: change the sqeuential ticket numbering to be secure (OWASP guidelines)
-
-log.rs:
-
-    //TODO: Send log_line to logstore instead of printing to stdout
+_dev_utils:
+    dev_db.rs : fix the db string to be fetched from env 
 
 
-General:
 
-    Write more tests.
+Add variable field support for generic base "create" function and "upadate" function
+
+
+
+
+
+
+Fresh empty db + devutils_OFF + cargo run  ===> Error: Model(Store(FailToCreatePool("error returned from database: password authentication failed for user \"pg\"")))
+
+db off + cargo run ===> Runs 
+
+db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
+
+db on + devutils_ON + cargo run ===> Success
+
+db populated + devutils_OFF + cargo run ===> Success

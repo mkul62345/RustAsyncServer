@@ -7,10 +7,11 @@ use crate::model;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Clone, Serialize, strum_macros::AsRefStr)]
+#[derive(Debug, Serialize, strum_macros::AsRefStr)]
 #[serde(tag = "type", content = "data")]
 pub enum Error{
     LoginFail,
+	CtxCannotNewRootCtx,
 
 	// Initialization Errors
 	ConfigMissingEnv{ var: &'static str},
@@ -25,7 +26,13 @@ pub enum Error{
 
 
 	// Modules
-	//Model(model::Error),
+	Model(model::Error),
+}
+
+impl From<model::Error> for Error {
+    fn from(val: model::Error) -> Self {
+        Self::Model(val)
+    }
 }
 
 impl IntoResponse for Error {
@@ -34,7 +41,7 @@ impl IntoResponse for Error {
 		let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
 
 		// Insert the Error into the reponse.
-		response.extensions_mut().insert(self);
+		//response.extensions_mut().insert(self);   // SILENCED ERROR, UNCOMMENT | Derive clone if something pops after uncommenting
 
 		response
     }

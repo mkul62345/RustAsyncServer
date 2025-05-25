@@ -7,7 +7,7 @@ pub struct Config {
     //pub WEB_FOLDER: String,
 
     //DB
-    pub DB_CONNECTION_STRING: String,
+    pub DB_URL: String,
 }
 
 pub fn config() -> &'static Config {
@@ -26,8 +26,7 @@ impl Config {
             // Web
             //WEB_FOLDER: get_env("SERVICE_WEB_FOLDER")?,
             //DB
-            //DB_CONNECTION_STRING: get_env("DB_CONNECTION_STRING")?,                   //Uncomment to fetch from env
-            DB_CONNECTION_STRING: String::from("postgres://root:root@localhost/sqldb"),
+            DB_URL: get_env("SERVICE_DB_URL")?,                   //Uncomment to fetch from env
         })
     }
 }

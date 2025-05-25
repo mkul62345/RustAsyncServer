@@ -7,7 +7,7 @@ use lazy_regex::regex_captures;
 use tower_cookies::{Cookie, Cookies};
 use crate::web::AUTH_TOKEN;
 use crate::{Error, Result};
-use crate::model::ModelController;
+use crate::model::ModelManager;
 use crate::ctx::Ctx;
 use axum::http::request::Parts;
 
@@ -25,7 +25,7 @@ pub async fn mw_require_auth(
 }
 
 pub async fn mw_ctx_resolver(
-	_mc: State<ModelController>,
+	_mm: State<ModelManager>,
 	cookies: Cookies,
 	mut req: Request<Body>,
 	next: Next,
@@ -54,13 +54,13 @@ pub async fn mw_ctx_resolver(
 	}
 
 	// Store the ctx_result in the request extension.
-	req.extensions_mut().insert(result_ctx);
+	//req.extensions_mut().insert(result_ctx);
 
 	Ok(next.run(req).await)
 }
 
 
-
+/* 
 impl<S: Send + Sync> FromRequestParts<S> for Ctx {
     type Rejection = Error;
 
@@ -74,16 +74,16 @@ impl<S: Send + Sync> FromRequestParts<S> for Ctx {
 			.clone()
 	}
 
-}
+}*/
 
 //Currently parsed using a regex pattern
-fn parse_token(token: String) -> Result<(u64, String, String)> {
+fn parse_token(token: String) -> Result<(i64, String, String)> {
     let (_whole, user_id, exp, sign) = regex_captures!(
         r#"user-(\d+)\.(.+)\.(.+)"#, // Pattern
         &token
     ).ok_or(Error::AuthFailTokenWrongFormat)?;
 
-    let user_id: u64 = user_id
+    let user_id: i64 = user_id
     .parse()
     .map_err(|_| Error::AuthFailTokenWrongFormat)?;
 

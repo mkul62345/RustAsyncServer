@@ -2,6 +2,7 @@
 pub use self::error::{Error, Result};
 pub use config::config; 
 
+use model::ModelManager;
 use tracing::{info, debug};
 use crate::ctx::Ctx;
 use axum::http::{Method, Uri};
@@ -15,7 +16,6 @@ use axum::{
     Json, 
     Router
 };
-use model::ModelController;
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
@@ -31,7 +31,7 @@ use uuid::Uuid;
 mod config;
 mod log;
 mod ctx;
-mod model;
+mod model; 
 mod web;
 mod error;
 mod _dev_utils;
@@ -49,26 +49,27 @@ async fn main() -> Result<()> {
 
 
     ////////////    FOR DEVELOPMENT ONLY
-    _dev_utils::init_dev().await;
+    //_dev_utils::init_dev().await; // For tests: DB teardown -> setup.
 
 
     ////////////    FOR DEVELOPMENT ONLY
 
-    let mc = ModelController::new().await?;
+    let mm: ModelManager = ModelManager::new().await?;
 
-    let routes_apis = web::routes_tickets::routes(mc.clone())
- 		.route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
+    //Authenticated API
+    //let routes_apis = web::routes_tickets::routes(mm.clone())
+ 	//	.route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
     
     let app = Router::new()
         .merge(web::routes_hello::routes())
         .merge(web::routes_login::routes())
-        .nest("/api", routes_apis)
+    //    .nest("/api", routes_apis)                                          //Authenticated API
         .nest_service("/pic", ServeDir::new("assets/tba.png"))
         .nest_service("/text", ServeDir::new("assets/dror.txt"))
         .nest_service("/vid", ServeDir::new("assets/helooks.mp4"))
-        .layer(middleware::map_response(main_response_mapper))
+        //.layer(middleware::map_response(main_response_mapper))
         .layer(middleware::from_fn_with_state(
-            mc.clone(),
+            mm.clone(),
             web::mw_auth::mw_ctx_resolver,
         ))
         .layer(CookieManagerLayer::new())
@@ -147,18 +148,6 @@ mod tests {
         assert!(resp)
     }
     
-/* 
-    async fn login_test() -> Result<()>{
-        let req_login = json!({
-            "username": "user",
-            "pwd": "123"
-        });
-        
-        
-        Ok(())
-    }
-*/
-
     //Add tests here
 
 }
