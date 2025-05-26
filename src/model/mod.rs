@@ -2,6 +2,7 @@ pub use self::error::{Error, Result};
 use store::{new_db_pool, Db};
 
 pub mod task;
+pub mod user;
 mod base;
 mod error;
 mod store;

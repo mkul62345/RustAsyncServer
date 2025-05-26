@@ -60,22 +60,6 @@ pub async fn mw_ctx_resolver(
 }
 
 
-/* 
-impl<S: Send + Sync> FromRequestParts<S> for Ctx {
-    type Rejection = Error;
-
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-		println!("->> {:<12} - Ctx", "EXTRACTOR");
-
-		parts
-			.extensions
-			.get::<Result<Ctx>>()
-			.ok_or(Error::AuthFailCtxNotInRequestExt)?
-			.clone()
-	}
-
-}*/
-
 //Currently parsed using a regex pattern
 fn parse_token(token: String) -> Result<(i64, String, String)> {
     let (_whole, user_id, exp, sign) = regex_captures!(

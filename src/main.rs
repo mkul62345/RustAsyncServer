@@ -28,6 +28,7 @@ use serde_json::json;
 use serde::Deserialize;
 use uuid::Uuid;
 
+mod crypt;
 mod config;
 mod log;
 mod ctx;
@@ -62,7 +63,7 @@ async fn main() -> Result<()> {
     
     let app = Router::new()
         .merge(web::routes_hello::routes())
-        .merge(web::routes_login::routes())
+        .merge(web::routes_login::routes(mm.clone()))
     //    .nest("/api", routes_apis)                                          //Authenticated API
         .nest_service("/pic", ServeDir::new("assets/tba.png"))
         .nest_service("/text", ServeDir::new("assets/dror.txt"))

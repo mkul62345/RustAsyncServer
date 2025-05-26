@@ -5,21 +5,36 @@ edition = "2024"
 
 
 [dependencies]
+# Async framework
 tokio = { version = "1.44.2", features = ["full"] }
 axum = { version = "0.8", features=["macros"]}
-reqwest = "0.12.15"
+tower = "0.5.2"
 tower-http = { version = "0.6.2", features = ["full"] }
+tower-cookies = "0.11.0"
+
+# Tracing
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing = "0.1.41"
-tower = "0.5.2"
+
+# Utils
+reqwest = "0.12.15"
 serde = { version = "1.0.219", features = ["derive"] } 
 serde_json = "1.0.140"
-tower-cookies = "0.11.0"
 lazy-regex = "3.4.1"
 uuid = { version = "1.16.0", features = ["v4", "fast-rng"] } 
 strum_macros = "0.27.1"
 serde_with = "3.12.0"
+
+# Data
 sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-native-tls", "postgres", "derive", "uuid", "time"] }
+
+# Cryptography
+sha2 = "0.10.9"
+rand = "0.9.1"
+hmac = "0.12.1"
+base64-url = "3.0.0"
+anyhow = "1.0.98"
+
 
  
 [dev-dependencies]
