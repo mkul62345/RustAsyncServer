@@ -2,7 +2,9 @@ use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
 use serde::Serialize;
 
-use crate::model;
+use crate::{crypt, model};
+
+use super::mw_auth;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -14,7 +16,11 @@ pub enum Error {
     LoginFailPwdNotMatching{user_id: i64},
     
     // Modules
-    Model(model::Error)
+    Model(model::Error),
+	Crypt(crypt::Error),
+
+	// Context Extraction
+	CtxExt(mw_auth::CtxExtError),
 }
 
 impl IntoResponse for Error {
@@ -33,6 +39,18 @@ impl IntoResponse for Error {
 impl From<model::Error> for Error {
     fn from(val: model::Error) -> Self {
         Self::Model(val)
+    }
+}
+
+impl From<crypt::Error> for Error {
+    fn from(val: crypt::Error) -> Self {
+        Self::Crypt(val)
+    }
+}
+
+impl From<mw_auth::CtxExtError> for Error {
+    fn from(val: mw_auth::CtxExtError) -> Self {
+        Self::CtxExt(val)
     }
 }
 // endregion: From Impls

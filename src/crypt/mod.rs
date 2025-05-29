@@ -1,9 +1,10 @@
-mod error;
-pub mod pwd;
-
 pub use self::error::{Error, Result};
 use hmac::{Hmac, Mac};
 use sha2::Sha512;
+
+pub mod pwd;
+pub mod token;
+mod error;
 
 pub struct EncryptContent {
     pub content: String,    // Plaintext content

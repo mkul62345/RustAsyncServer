@@ -10,3 +10,9 @@ db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
 db on + devutils_ON + cargo run ===> Success
 
 db populated + devutils_OFF + cargo run ===> Success
+
+
+
+web/error.rs:
+    IntoResponse, currently inserting error into response commented out.
+        Trait bound caused, need to refactor errors which will fix it. 

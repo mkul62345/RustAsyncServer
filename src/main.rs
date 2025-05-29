@@ -28,6 +28,7 @@ use serde_json::json;
 use serde::Deserialize;
 use uuid::Uuid;
 
+mod utils;
 mod crypt;
 mod config;
 mod log;
@@ -57,14 +58,10 @@ async fn main() -> Result<()> {
 
     let mm: ModelManager = ModelManager::new().await?;
 
-    //Authenticated API
-    //let routes_apis = web::routes_tickets::routes(mm.clone())
- 	//	.route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
-    
+
     let app = Router::new()
         .merge(web::routes_hello::routes())
-        .merge(web::routes_login::routes(mm.clone()))
-    //    .nest("/api", routes_apis)                                          //Authenticated API
+        .merge(web::routes_login::routes(mm.clone()))                     //Log in/out API
         .nest_service("/pic", ServeDir::new("assets/tba.png"))
         .nest_service("/text", ServeDir::new("assets/dror.txt"))
         .nest_service("/vid", ServeDir::new("assets/helooks.mp4"))
@@ -131,24 +128,4 @@ async fn main_response_mapper(
 
 	println!();
 	error_response.unwrap_or(res)
-}
-
-
-
-
-///    Tests section
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn hello_test() {
-        let test_query = web::routes_hello::HelloParams { name: Some(String::from("TEST"))};
-        let resp = true;
-        //assert_eq!("<h1>Hello, World!</h1>", hello_handler().await.0); 
-        assert!(resp)
-    }
-    
-    //Add tests here
-
 }

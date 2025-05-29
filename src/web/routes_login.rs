@@ -9,11 +9,50 @@ use axum::routing::post;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use tower_cookies::{Cookie, Cookies};
-use crate::web;
+use tracing::debug;
+use crate::web::{self, remove_token_cookie};
 
 pub fn routes(mm: ModelManager) -> Router {
-    Router::new().route("/login", post(api_login_handler))
+    Router::new()
+    .route("/api/login", post(api_login_handler))
+    .route("/api/logoff", post(api_logoff_handler))
     .with_state(mm)
+}
+
+// region: Logoff
+#[derive(Debug, Deserialize)]
+struct LogoffPayload {
+    logoff: bool,
+}
+
+async fn api_logoff_handler(
+    cookies: Cookies,
+    Json(payload): Json<LogoffPayload>
+) -> Result<Json<Value>>{
+    debug!("api_logoff_handler");
+
+    let should_logoff = payload.logoff;
+
+    if should_logoff {
+        remove_token_cookie(&cookies)?;
+    }
+
+    //Create success response body
+    let body = Json(json!({
+        "result": {
+            "success": true
+        }
+    }));
+
+    Ok(body)
+}
+// endregion: Logoff
+
+// region: Login
+#[derive(Debug, Deserialize)]
+struct LoginPayload {
+    username: String,
+    pwd: String,
 }
 
 async fn api_login_handler(
@@ -46,8 +85,8 @@ async fn api_login_handler(
     )
     .map_err(|_| Error::LoginFailPwdNotMatching { user_id: user.id })?;
      
-    // TODO: Replace with real token generation
-    cookies.add(Cookie::new(web::AUTH_TOKEN, "user-1.exp.sign"));
+    // Set web-token
+    web::set_token_cookie(&cookies, &user.username, &user.token_salt.to_string())?;
 
     //Create success response body
     let body = Json(json!({
@@ -58,10 +97,5 @@ async fn api_login_handler(
 
     Ok(body)
 }
+// endregion: Login
 
-
-#[derive(Debug, Deserialize)]
-struct LoginPayload {
-    username: String,
-    pwd: String,
-}
