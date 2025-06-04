@@ -2,11 +2,12 @@ pub use self::error::{Error, Result};
 use tower_cookies::{Cookie, Cookies};
 use crate::crypt::token::generate_web_token;
 
+pub mod rpc;
 pub mod routes_login;
-//pub mod routes_tickets;
-pub mod routes_hello;
 pub mod mw_auth;
+pub mod mw_res_map;
 mod error;
+mod log;
 
 pub const AUTH_TOKEN: &str = "auth-token";
 

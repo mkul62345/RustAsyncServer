@@ -3,7 +3,6 @@ use axum::extract::{FromRequestParts, State};
 use axum::response::Response;
 use axum::middleware::Next;
 use axum::http::Request;
-use lazy_regex::regex_captures;
 use serde::Serialize;
 use tower_cookies::{Cookie, Cookies};
 use tracing::debug;
@@ -19,7 +18,7 @@ use super::set_token_cookie;
 
 
 pub async fn mw_ctx_require(
-    ctx: Result<Ctx>,
+    ctx: Result<CtxW>,
     req: Request<Body>, 
     next: Next,
 ) -> Result<Response>{

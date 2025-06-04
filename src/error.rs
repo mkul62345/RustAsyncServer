@@ -1,4 +1,3 @@
-use core::fmt;
 use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
 use serde::Serialize;
@@ -10,21 +9,11 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize, strum_macros::AsRefStr)]
 #[serde(tag = "type", content = "data")]
 pub enum Error{
-    LoginFail,
 	CtxCannotNewRootCtx,
 
 	// Initialization Errors
 	ConfigMissingEnv(&'static str),
 	ConfigWrongFormat(&'static str),
-
-	// Auth Errors
-	AuthFailNoAuthTokenCookie,
-	AuthFailTokenWrongFormat,
-	AuthFailCtxNotInRequestExt,
-
-	// Model Errors  | TODO: Refactor into model layer
-	TicketDeleteFailIdNotFound { id: u64},
-
 
 	// Modules
 	Model(model::Error),
@@ -60,41 +49,3 @@ impl core::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 // endregion:    Error boilerplate
-
-impl Error{
-	pub fn client_status_and_error(&self) -> (StatusCode, ClientError){
-		#[allow(unreachable_patterns)] //For cases where fallback is redundant]
-		match self {
-
-			//Login Fail
-			Self::LoginFail => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
-
-			//Auth
-			Self::AuthFailCtxNotInRequestExt
-			| Self::AuthFailNoAuthTokenCookie
-			| Self::AuthFailTokenWrongFormat => {
-			 (StatusCode::FORBIDDEN, ClientError::NO_AUTH)
-			}
-
-			//Model
-			Self::TicketDeleteFailIdNotFound { id } => {
-				(StatusCode::BAD_REQUEST, ClientError::INVALID_PARAMS)
-			}
-
-			//Fallback
-			_ => (
-				StatusCode::INTERNAL_SERVER_ERROR, 
-				ClientError::SERVICE_ERROR
-			),
-		}
-	}
-}
-
-#[derive(Debug, strum_macros::AsRefStr, Serialize)]
-#[allow(non_camel_case_types)]
-pub enum ClientError {
-	LOGIN_FAIL,
-	NO_AUTH,
-	INVALID_PARAMS,
-	SERVICE_ERROR,
-}

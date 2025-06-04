@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
 use serde::Serialize;
@@ -8,8 +9,13 @@ use super::mw_auth;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, strum_macros::AsRefStr)]
 pub enum Error {
+	// RPC
+	RpcMethodUnknown(String),
+	RpcMissingParams{ rpc_mathod: String},
+	RpcFailJsonParams{ rpc_mathod: String},
+
     // Login
     LoginFailUsernameNotFound,
     LoginFailUserHasNoPwd{user_id: i64},
@@ -18,6 +24,9 @@ pub enum Error {
     // Modules
     Model(model::Error),
 	Crypt(crypt::Error),
+
+	// Ext Modules,
+	SerdeJson(String),
 
 	// Context Extraction
 	CtxExt(mw_auth::CtxExtError),
@@ -29,13 +38,19 @@ impl IntoResponse for Error {
 		let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
 
 		// Insert the Error into the reponse.
-		//response.extensions_mut().insert(self);   // SILENCED ERROR, UNCOMMENT | Derive clone if something pops after uncommenting
+		response.extensions_mut().insert(Arc::new(self));   // SILENCED ERROR, UNCOMMENT | Derive clone if something pops after uncommenting
 
 		response
     }
 }
 
 // region: From Impls
+impl From<serde_json::Error> for Error {
+    fn from(val: serde_json::Error) -> Self {
+        Self::SerdeJson(val.to_string())
+    }
+}
+
 impl From<model::Error> for Error {
     fn from(val: model::Error) -> Self {
         Self::Model(val)
@@ -81,7 +96,16 @@ impl Error{
                 (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL)
             }
 
-			//Fallback
+			// Auth
+			CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
+
+			// Model
+			Model(model::Error::EntityNotFound { entity, id }) => (
+				StatusCode::BAD_REQUEST,
+				ClientError::ENTITY_NOT_FOUND { entity, id: *id }
+			),
+
+			// Fallback
 			_ => (
 				StatusCode::INTERNAL_SERVER_ERROR, 
 				ClientError::SERVICE_ERROR
@@ -90,10 +114,13 @@ impl Error{
 	}
 }
 
-#[derive(Debug, strum_macros::AsRefStr)]
+#[derive(Serialize, Debug, strum_macros::AsRefStr)]
+#[serde(tag = "message", content = "detail")]
 #[allow(non_camel_case_types)]
 pub enum ClientError {
 	LOGIN_FAIL,
 	NO_AUTH,
+	ENTITY_NOT_FOUND { entity: &'static str, id: i64},
+
 	SERVICE_ERROR,
 }

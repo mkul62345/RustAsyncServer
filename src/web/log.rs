@@ -1,17 +1,22 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::{ctx::Ctx, error::ClientError, Error, Result};
+use crate::{ctx::Ctx};
+use crate::web::{Error, Result};
+use crate::web::error::ClientError;
 use axum::http::Uri;
-use reqwest::{Client, Method};
+use reqwest::Method;
 use serde::Serialize;
 use serde_json::{json, Value};
 use serde_with::skip_serializing_none;
+use tracing::debug;
 use uuid::Uuid;
 
+use super::rpc::RpcInfo;
 
 pub async fn log_request(
     uuid: Uuid,
     req_method: Method,
     uri : Uri,
+    rpc_info: Option<&RpcInfo>,
     ctx: Option<Ctx>,
     service_error: Option<&Error>,
     client_error: Option<ClientError>,
@@ -34,6 +39,9 @@ pub async fn log_request(
         req_path: uri.to_string(),
         req_method: req_method.to_string(),
 
+        rpc_id: rpc_info.and_then(|rpc| rpc.id.as_ref().map(|id| id.to_string())),
+        rpc_method: rpc_info.map(|rpc| rpc.method.to_string()),
+
         user_id: ctx.map(|c| c.user_id()),
 
         client_error_type: client_error.map(|e| e.as_ref().to_string()),
@@ -43,7 +51,7 @@ pub async fn log_request(
     };
 
     //TODO: Send log_line to logstore instead of printing to stdout
-    print!("->> log_request: \n{}", json!(log_line));
+    debug!("REQUEST LOG LINE:\n{}", json!(log_line));
     Ok(())
 }
 
@@ -60,6 +68,10 @@ struct RequestLogLine {
     // Request attributes.
     req_path: String,
     req_method: String,
+
+    // RPC info.
+    rpc_id: Option<String>,
+    rpc_method: Option<String>,
 
     // Error attributes.
     client_error_type: Option<String>,

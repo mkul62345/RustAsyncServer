@@ -3,37 +3,37 @@ use crate::ctx::Ctx;
 use crate::model::user::{UserBackendModelController, UserForLogin};
 use crate::model::ModelManager;
 use crate::web::error::{Error, Result};
+use crate::web::{self, remove_token_cookie};
 use axum::extract::State;
 use axum::{Json, Router};
 use axum::routing::post;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use tower_cookies::{Cookie, Cookies};
+use tower_cookies::Cookies;
 use tracing::debug;
-use crate::web::{self, remove_token_cookie};
 
 pub fn routes(mm: ModelManager) -> Router {
     Router::new()
     .route("/api/login", post(api_login_handler))
-    .route("/api/logoff", post(api_logoff_handler))
+    .route("/api/logout", post(api_logout_handler))
     .with_state(mm)
 }
 
-// region: Logoff
+// region: Logout
 #[derive(Debug, Deserialize)]
-struct LogoffPayload {
-    logoff: bool,
+struct LogoutPayload {
+    logout: bool,
 }
 
-async fn api_logoff_handler(
+async fn api_logout_handler(
     cookies: Cookies,
-    Json(payload): Json<LogoffPayload>
+    Json(payload): Json<LogoutPayload>
 ) -> Result<Json<Value>>{
-    debug!("api_logoff_handler");
+    debug!("api_logout_handler");
 
-    let should_logoff = payload.logoff;
+    let should_logout = payload.logout;
 
-    if should_logoff {
+    if should_logout {
         remove_token_cookie(&cookies)?;
     }
 
@@ -46,7 +46,7 @@ async fn api_logoff_handler(
 
     Ok(body)
 }
-// endregion: Logoff
+// endregion: Logout
 
 // region: Login
 #[derive(Debug, Deserialize)]

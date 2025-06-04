@@ -1,18 +1,7 @@
-Add variable field support for generic base "create" function and "upadate" function
-
-
-Fresh empty db + devutils_OFF + cargo run  ===> Error: Model(Store(FailToCreatePool("error returned from database: password authentication failed for user \"pg\"")))
-
-db off + cargo run ===> Runs 
-
-db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
-
-db on + devutils_ON + cargo run ===> Success
-
-db populated + devutils_OFF + cargo run ===> Success
+Add variable field support for generic base "create" function and "update" function -> then, add update to /rpc/mod.rs && /rpc/task_rpc.rs
 
 
 
-web/error.rs:
-    IntoResponse, currently inserting error into response commented out.
-        Trait bound caused, need to refactor errors which will fix it. 
+Check if behaving as expected:
+    db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
+
