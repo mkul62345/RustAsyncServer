@@ -8,15 +8,24 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize)]
 pub enum Error {
     EntityNotFound { entity: &'static str, id: i64},
+
     // Modules
     Crypt(crypt::Error),
     Store(store::Error),
 
     // Externals
     Sqlx(#[serde_as(as = "DisplayFromStr")] sqlx::Error),
+    SeaQuery(#[serde_as(as = "DisplayFromStr")] sea_query::error::Error)
+    
 }
 
 // region: From Impls
+impl From<sea_query::error::Error> for Error {
+    fn from(val: sea_query::error::Error) -> Self {
+        Self::SeaQuery(val)
+    }
+}
+
 impl From<crypt::Error> for Error {
     fn from(val: crypt::Error) -> Self {
         Self::Crypt(val)

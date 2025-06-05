@@ -67,7 +67,7 @@ async fn api_login_handler(
     } = payload;
     let root_ctx = Ctx::root_ctx();
     
-    let user: UserForLogin = UserBackendModelController::get_user_by_username(&root_ctx, &mm, &username)
+    let user: UserForLogin = UserBackendModelController::first_user_by_username(&root_ctx, &mm, &username)
         .await?
         .ok_or(Error::LoginFailUsernameNotFound)?;
 

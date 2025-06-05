@@ -47,7 +47,7 @@ pub async fn init_dev_db() -> Result<(), Box<dyn std::error::Error>>{
     let ctx = Ctx::root_ctx();
 
     // Set demo1 password
-    let demo1_user: User = UserBackendModelController::get_user_by_username(&ctx, &mm, "demo1")
+    let demo1_user: User = UserBackendModelController::first_user_by_username(&ctx, &mm, "demo1")
         .await?
         .unwrap();
 

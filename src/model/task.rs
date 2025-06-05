@@ -1,28 +1,9 @@
 use crate::{ctx::Ctx, ModelManager};
 use crate::model::{Error, Result};
+use modql::field::Fields;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use super::base::{self, DbBackendModelController};
-
-// region: Task types
-// Split tasks into subtypes based on intent
-// To be sent to the model layer
-#[derive(Debug, Clone, FromRow, Serialize)]
-pub struct Task {
-    pub id: i64,
-    pub title: String,
-}
-
-#[derive(Deserialize)]
-pub struct TaskForCreate {
-    pub title: String,
-}
-
-#[derive(Deserialize)]
-pub struct TaskForUpdate {
-    pub title: Option<String>,
-}
-// endregion: Task types
 
 // region: Task BackendModelController (Bmc)
 pub struct TaskBackendModelController;
@@ -32,23 +13,12 @@ impl DbBackendModelController for TaskBackendModelController {
 }
 
 impl TaskBackendModelController{
-
-    //TODO: switch to generic implementation when ready
     pub async fn create(
         _ctx: &Ctx,
         mm: &ModelManager,
         task_create: TaskForCreate,
     ) -> Result<i64> {
-        let db = mm.db();
-
-        let (id,) = sqlx::query_as::<_, (i64,)>(
-            "INSERT INTO task (title) values ($1) returning id"
-        )
-        .bind(task_create.title)
-        .fetch_one(db)
-        .await?;
-
-        Ok(id)
+        base::create::<Self, _>(_ctx, mm, task_create).await
     }
 
     pub async fn get(
@@ -66,15 +36,45 @@ impl TaskBackendModelController{
         base::list::<Self, _>(ctx, mm).await
     }
     
+    pub async fn update(
+        ctx: &Ctx,
+        mm: &ModelManager,
+        id: i64,
+        task_update: TaskForUpdate,
+    ) -> Result<()> {
+        base::update::<Self, _>(ctx, mm, id, task_update).await
+    }
+
     pub async fn delete(
         ctx: &Ctx,
         mm: &ModelManager,
         id: i64,
-    ) -> Result<u64> {
+    ) -> Result<()> {
         base::delete::<Self>(ctx, mm, id).await
-        }
+    }
     }
 // endregion: Task BackendModelController (Bmc)
+
+// region: Task types
+// Split tasks into subtypes based on intent
+// To be sent to the model layer
+#[derive(Debug, Clone, FromRow, Serialize, Fields)]
+pub struct Task {
+    pub id: i64,
+    pub title: String,
+}
+
+#[derive(Deserialize, Fields)]
+pub struct TaskForCreate {
+    pub title: String,
+}
+
+#[derive(Deserialize, Fields)]
+pub struct TaskForUpdate {
+    pub title: Option<String>,
+    pub complete: Option<bool>,
+}
+// endregion: Task types
 
 // region: Tests
 #[cfg(test)]

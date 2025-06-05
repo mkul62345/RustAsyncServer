@@ -63,7 +63,7 @@ async fn _ctx_resolve(mm: ModelManager, cookies: &Cookies) -> CtxExtResult {
 
 	// Get UserForAuth
 	let user: UserForAuth =
-		UserBackendModelController::get_user_by_username(&Ctx::root_ctx(), &mm, &token.identifier)
+		UserBackendModelController::first_user_by_username(&Ctx::root_ctx(), &mm, &token.identifier)
 			.await
 			.map_err(|ex| CtxExtError::ModelAccessError(ex.to_string()))?
 			.ok_or(CtxExtError::UserNotFound)?;

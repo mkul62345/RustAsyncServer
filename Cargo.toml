@@ -28,6 +28,9 @@ time = "0.3.41"
 
 # Data
 sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-native-tls", "postgres", "derive", "uuid", "time"] }
+sea-query = "0.32.6"
+sea-query-binder = { version = "0.7.0", features = ["sqlx-postgres", "with-uuid"] }
+modql = { version = "0.4.1", features = ["with-sea-query"] }
 
 # Cryptography
 sha2 = "0.10.9"
@@ -38,6 +41,5 @@ anyhow = "1.0.98"
 
 
 
- 
 [dev-dependencies]
 serial_test = "3.2.0"
