@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::web::mw_auth::CtxW;
+use crate::web::{mw_auth::CtxW, rpc::task_rpc::update_task};
 use axum::{body, extract::State, response::{IntoResponse, Response}, routing::post, Json, Router};
 use serde::Deserialize;
 use serde_json::{from_value, json, to_value, Value};
@@ -97,14 +97,13 @@ async fn _rpc_handler(
 
     debug!("_rpc_handler - method: {rpc_method}");
     
-
     let result_json: Value = match rpc_method.as_str() {
         // Task RPC methods.
         "create_task" => exec_rpc_fn!(create_task, ctx, mm, rpc_params),
 
         "list_tasks" => exec_rpc_fn!(list_tasks, ctx, mm),
 
-        //TODO: "update_task" => todo!(),
+        "update_task" => exec_rpc_fn!(update_task, ctx, mm, rpc_params),
 
         "delete_task" => exec_rpc_fn!(delete_task, ctx, mm, rpc_params),
 

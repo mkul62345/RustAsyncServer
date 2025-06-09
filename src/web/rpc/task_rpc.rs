@@ -2,12 +2,7 @@ use crate::ctx::Ctx;
 use crate::model::task::{Task, TaskBackendModelController, TaskForCreate, TaskForUpdate};
 use crate::model::ModelManager;
 use crate::web::Result;
-
 use super::{ParamsById, ParamsForCreate, ParamsForUpdate};
-
-
-
-
 
 pub async fn create_task(
     ctx: Ctx,
@@ -39,8 +34,10 @@ pub async fn update_task(
 ) -> Result<Task> {
     let ParamsForUpdate { id, data } = params;
 
-    todo!();
-    
+    TaskBackendModelController::update(&ctx, &mm, id, data);
+    let task =  TaskBackendModelController::get(&ctx, &mm, id).await?;
+
+    Ok(task)
 }
 
 pub async fn delete_task(

@@ -1,6 +1,4 @@
-Add variable field support for generic base "create" function and "update" function -> then, add update to /rpc/mod.rs && /rpc/task_rpc.rs
-
-
+add list_filtered to web/base.rs. Then add the feature to task to fetch filtered tasks
 
 Check if behaving as expected:
     db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
