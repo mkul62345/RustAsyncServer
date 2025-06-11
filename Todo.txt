@@ -1,28 +1,3 @@
-routes_tickets.rs:
+Check if behaving as expected:
+    db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
 
-    //TODO: Add filter-by to ticket display
-    //TODO: Consider expanding the ticket API
-
-routes_login.rs :
-
-    // TODO: Swap out the if for auth against db connection
-    // TODO: Replace with real token generation
-
-mw_auth.rs     :
-
-    // TODO: Parse token properly from cookie 
-    // TODO: Token components validations.
-
-model.rs:
-
-    // TODO: change into proper DB connection / sqlx 
-    // TODO: change the sqeuential ticket numbering to be secure (OWASP guidelines)
-
-log.rs:
-
-    //TODO: Send log_line to logstore instead of printing to stdout
-
-
-General:
-
-    Write more tests.

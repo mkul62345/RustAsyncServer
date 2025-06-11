@@ -1,0 +1,11 @@
+[env]
+
+## -- Secrets
+
+SERVICE_DB_URL= "postgres://pg:pg@localhost/app_db"
+
+SERVICE_PWD_KEY= "j0GV7KLOIdUejzDcGoH41vcIERoKavZaUhO1dil6kBU3jAtRyCHFY2bQbbQFZj1__5d7uB7I-CO4Xo98ELjZ4g"
+
+SERVICE_TOKEN_KEY = "sa2HJDqcotjug6AN0lhtwsL8Z5BggFZf03_PKKT8p36pxEU27uvXFp3VdKqXARNaUJr7KY1J2zJoZLd4aqx6YA"
+SERVICE_TOKEN_DURATION_SEC = "900" # 15 minutes
+

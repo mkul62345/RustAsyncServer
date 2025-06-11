@@ -3,21 +3,26 @@ use axum::extract::{FromRequestParts, State};
 use axum::response::Response;
 use axum::middleware::Next;
 use axum::http::Request;
-use lazy_regex::regex_captures;
+use serde::Serialize;
 use tower_cookies::{Cookie, Cookies};
+use tracing::debug;
+use crate::crypt::token::{validate_web_token, Token};
+use crate::model::user::{UserBackendModelController, UserForAuth};
 use crate::web::AUTH_TOKEN;
-use crate::{Error, Result};
-use crate::model::ModelController;
+use crate::web::{Error, Result};
+use crate::model::ModelManager;
 use crate::ctx::Ctx;
 use axum::http::request::Parts;
 
+use super::set_token_cookie;
 
-pub async fn mw_require_auth(
-    ctx: Result<Ctx>,
+
+pub async fn mw_ctx_require(
+    ctx: Result<CtxW>,
     req: Request<Body>, 
     next: Next,
 ) -> Result<Response>{
-    println!("MIDDLEWARE AUTH REQUEST");
+    debug!("mw_ctx_require - {ctx:?}");
 
     ctx?;
 
@@ -25,67 +30,93 @@ pub async fn mw_require_auth(
 }
 
 pub async fn mw_ctx_resolver(
-	_mc: State<ModelController>,
+	State(mm): State<ModelManager>,
 	cookies: Cookies,
 	mut req: Request<Body>,
 	next: Next,
-) -> Result<Response> {
-	println!("->> mw_ctx_resolver");
+) -> Response {
+	debug!("mw_ctx_resolver"); 
 
-	let auth_token = cookies.get(AUTH_TOKEN).map(|c| c.value().to_string());
+	let ctx_extraction_result = _ctx_resolve(mm, &cookies).await;
 
-	// Compute Result<Ctx>.
-	let result_ctx = match auth_token
-		.ok_or(Error::AuthFailNoAuthTokenCookie)
-		.and_then(parse_token)
+	if ctx_extraction_result.is_err()
+		&& !matches!(ctx_extraction_result, Err(CtxExtError::TokenNotInCookie))
 	{
-		Ok((user_id, _exp, _sign)) => {
-			// TODO: Token components validations.
-			Ok(Ctx::new(user_id))
-		}
-		Err(e) => Err(e),
-	};
-
-	// Remove the cookie if something went wrong other than NoAuthTokenCookie.
-	if result_ctx.is_err()
-		&& !matches!(result_ctx, Err(Error::AuthFailNoAuthTokenCookie))
-	{
-		cookies.remove(Cookie::from(AUTH_TOKEN))
+		cookies.remove(Cookie::from(AUTH_TOKEN)); 
 	}
 
-	// Store the ctx_result in the request extension.
-	req.extensions_mut().insert(result_ctx);
+	// Store ctx_extraction_result in the request extension
+	req.extensions_mut().insert(ctx_extraction_result);
 
-	Ok(next.run(req).await)
+	next.run(req).await
 }
 
+async fn _ctx_resolve(mm: ModelManager, cookies: &Cookies) -> CtxExtResult {
+	// Get Token String
+	let token = cookies
+		.get(AUTH_TOKEN)
+		.map(|c| c.value().to_string())
+		.ok_or(CtxExtError::TokenNotInCookie)?;
 
+	// Parse Token
+	let token = token.parse::<Token>().map_err(|_| CtxExtError::TokenWrongFormat)?;
 
-impl<S: Send + Sync> FromRequestParts<S> for Ctx {
-    type Rejection = Error;
+	// Get UserForAuth
+	let user: UserForAuth =
+		UserBackendModelController::first_user_by_username(&Ctx::root_ctx(), &mm, &token.identifier)
+			.await
+			.map_err(|ex| CtxExtError::ModelAccessError(ex.to_string()))?
+			.ok_or(CtxExtError::UserNotFound)?;
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-		println!("->> {:<12} - Ctx", "EXTRACTOR");
+	// Validate Token
+	validate_web_token(&token, &user.token_salt.to_string())
+		.map_err(|_| CtxExtError::FailValidate)?;
+
+	// Update Token
+	set_token_cookie(cookies, &user.username, &user.token_salt.to_string())
+		.map_err(|_| CtxExtError::CannotSetTokenCookie)?;
+
+	// Create CtxExtResult
+	Ctx::new(user.id)
+		.map(CtxW)
+		.map_err(|ex| CtxExtError::CtxCreateFail(ex.to_string()))
+}
+
+// region:    --- Ctx Extractor
+#[derive(Debug, Clone)]
+pub struct CtxW(pub Ctx);
+
+impl<S: Send + Sync> FromRequestParts<S> for CtxW {
+	type Rejection = Error;
+
+	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
+		debug!("{:<12} - Ctx", "EXTRACTOR");
 
 		parts
 			.extensions
-			.get::<Result<Ctx>>()
-			.ok_or(Error::AuthFailCtxNotInRequestExt)?
+			.get::<CtxExtResult>()
+			.ok_or(Error::CtxExt(CtxExtError::CtxNotInRequestExt))?
 			.clone()
+			.map_err(Error::CtxExt)
 	}
-
 }
+// endregion: --- Ctx Extractor
 
-//Currently parsed using a regex pattern
-fn parse_token(token: String) -> Result<(u64, String, String)> {
-    let (_whole, user_id, exp, sign) = regex_captures!(
-        r#"user-(\d+)\.(.+)\.(.+)"#, // Pattern
-        &token
-    ).ok_or(Error::AuthFailTokenWrongFormat)?;
+// region:    --- Ctx Extractor Result/Error
+type CtxExtResult = core::result::Result<CtxW, CtxExtError>;
 
-    let user_id: u64 = user_id
-    .parse()
-    .map_err(|_| Error::AuthFailTokenWrongFormat)?;
+#[derive(Clone, Serialize, Debug)]
+pub enum CtxExtError {
+	TokenNotInCookie,
+	TokenWrongFormat,
 
-    Ok((user_id, exp.to_string(), sign.to_string()))
+	UserNotFound,
+	ModelAccessError(String),
+	FailValidate,
+	CannotSetTokenCookie,
+
+	CtxNotInRequestExt,
+	CtxCreateFail(String),
 }
+// endregion: --- Ctx Extractor Result/Error
+
