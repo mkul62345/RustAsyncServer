@@ -7,9 +7,3 @@ INSERT INTO "user"
 INSERT INTO "user" 
     (username, cid, ctime, mid, mtime) VALUES 
     ('demo1',  0,   now(), 0,   now());
-
--- Agent mock-01 (with 'parrot' model) (id: 100)
-INSERT INTO "agent"    
-    (id,  owner_id, name,      cid, ctime, mid, mtime) VALUES
-    (100, 0,        'mock-01', 0,   now(), 0,   now());
-
