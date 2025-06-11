@@ -1,8 +1,8 @@
 use crate::ctx::Ctx;
-use crate::model::task::{Task, TaskBackendModelController, TaskForCreate, TaskForUpdate};
+use crate::model::task::{Task, TaskBackendModelController, TaskFilter, TaskForCreate, TaskForUpdate};
 use crate::model::ModelManager;
+use crate::web::rpc::params::{ParamsById, ParamsForCreate, ParamsForUpdate, ParamsList};
 use crate::web::Result;
-use super::{ParamsById, ParamsForCreate, ParamsForUpdate};
 
 pub async fn create_task(
     ctx: Ctx,
@@ -20,9 +20,9 @@ pub async fn create_task(
 pub async fn list_tasks(
     ctx: Ctx,
     mm: ModelManager,
-    //TODO: params: ParamsForFilter<FilterForTask>,
+    params: ParamsList<TaskFilter>,
 ) -> Result<Vec<Task>> {
-    let tasks = TaskBackendModelController::list(&ctx, &mm).await?;
+    let tasks = TaskBackendModelController::list(&ctx, &mm, params.filters, params.list_options).await?;
     
     Ok(tasks)
 }

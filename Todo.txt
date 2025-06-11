@@ -1,5 +1,3 @@
-add list_filtered to web/base.rs. Then add the feature to task to fetch filtered tasks
-
 Check if behaving as expected:
     db off + devutils_ON + cargo run ===> Called unwrap on PoolTimedOut
 

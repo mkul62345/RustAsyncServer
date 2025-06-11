@@ -44,8 +44,6 @@ async fn main() -> Result<()> {
 
     ////////////    FOR DEVELOPMENT ONLY
     //_dev_utils::init_dev().await; // For tests: DB teardown -> setup.
-
-
     ////////////    FOR DEVELOPMENT ONLY
 
     let mm: ModelManager = ModelManager::new().await?;

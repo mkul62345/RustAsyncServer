@@ -1,6 +1,7 @@
 use crate::{ctx::Ctx, ModelManager};
 use crate::model::{Error, Result};
 use modql::field::Fields;
+use modql::filter::{FilterNodes, ListOptions, OpValsBool, OpValsInt64, OpValsString};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use super::base::{self, DbBackendModelController};
@@ -32,8 +33,10 @@ impl TaskBackendModelController{
     pub async fn list(
         ctx: &Ctx,
         mm: &ModelManager,
+        filters: Option<Vec<TaskFilter>>,
+        list_options: Option<ListOptions>,
     ) -> Result<Vec<Task>> {
-        base::list::<Self, _>(ctx, mm).await
+        base::list::<Self, _, _>(ctx, mm, filters, list_options).await
     }
     
     pub async fn update(
@@ -61,7 +64,9 @@ impl TaskBackendModelController{
 #[derive(Debug, Clone, FromRow, Serialize, Fields)]
 pub struct Task {
     pub id: i64,
+    
     pub title: String,
+    pub done: bool, 
 }
 
 #[derive(Deserialize, Fields)]
@@ -69,10 +74,18 @@ pub struct TaskForCreate {
     pub title: String,
 }
 
-#[derive(Deserialize, Fields)]
+#[derive(Deserialize, Fields, Default)]
 pub struct TaskForUpdate {
     pub title: Option<String>,
-    pub complete: Option<bool>,
+    pub done: Option<bool>,
+}
+
+#[derive(FilterNodes, Deserialize, Default, Debug)]
+pub struct TaskFilter {
+    id: Option<OpValsInt64>,
+
+    title: Option<OpValsString>,
+    done: Option<OpValsBool>,
 }
 // endregion: Task types
 
@@ -80,6 +93,7 @@ pub struct TaskForUpdate {
 #[cfg(test)]
 mod tests {
     #![allow(unused)]
+    use serde_json::json;
     use serial_test::serial;
     use crate::{_dev_utils, model::task};
     use super::*;
@@ -111,20 +125,20 @@ mod tests {
 
     #[serial]
     #[tokio::test]
-    async fn test_list_ok() -> Result<()>{
+    async fn test_list_all_ok() -> Result<()>{
         // Setup
         let mm = _dev_utils::init_test().await;
         let ctx = Ctx::root_ctx();
-        let fx_titles = &["test_list_ok 01", "test_list_ok 02"];
+        let fx_titles = &["test_list_all_ok 01", "test_list_all_ok 02"];
         _dev_utils::seed_tasks(&ctx, &mm, fx_titles).await?;
 
         // Execute
-        let tasks = TaskBackendModelController::list(&ctx, &mm).await?;
+        let tasks = TaskBackendModelController::list(&ctx, &mm, None, None).await?;
 
         // Validate
         let tasks: Vec<Task> = tasks
             .into_iter()
-            .filter(|t| t.title.starts_with("test_list_ok"))
+            .filter(|t| t.title.starts_with("test_list_all_ok"))
             .collect();
 
         assert_eq!(tasks.len(), 2 , "number of seeded tasks.");
@@ -137,6 +151,67 @@ mod tests {
         Ok(())
     }    
 
+    #[serial]
+    #[tokio::test]
+    async fn test_list_by_filter_ok() -> Result<()>{
+        // Setup
+        let mm = _dev_utils::init_test().await;
+        let ctx = Ctx::root_ctx();
+        let fx_titles = &[
+            "test_list_by_filter_ok 01.a", 
+            "test_list_by_filter_ok 01.b",
+            "test_list_by_filter_ok 02.a",
+            "test_list_by_filter_ok 02.b",
+            "test_list_by_filter_ok 03",
+            ];
+        _dev_utils::seed_tasks(&ctx, &mm, fx_titles).await?;
+
+        // Execute
+        let filters: Vec<TaskFilter> = serde_json::from_value(json!([
+            {
+            "title": {
+                "$endsWith": ".a",
+                "$containsAny": ["01", "02"],
+                }
+            },
+            {
+            "title": {
+                "$contains": "03",
+            }
+        }]))?;
+
+        let list_options = serde_json::from_value(json!({
+            "order_bys": "!id"
+        }))?;
+
+        let tasks = TaskBackendModelController::list(&ctx, &mm, Some(filters), list_options).await?;
+
+        // Validate
+        assert_eq!(tasks.len(), 3);
+        assert!(tasks[0].title.ends_with("03"));
+        assert!(tasks[1].title.ends_with("02.a"));
+        assert!(tasks[2].title.ends_with("01.a"));
+
+        // Cleanup
+        let tasks = TaskBackendModelController::list(
+            &ctx,
+            &mm,
+            Some(serde_json::from_value(json!([{
+                "title": {"$startsWith": "test_list_by_filter_ok"}
+            }]))?),
+            None
+        )
+        .await?; 
+        assert_eq!(tasks.len(), 5);
+
+        for task in tasks.iter() {
+            TaskBackendModelController::delete(&ctx, &mm, task.id).await?;
+        }
+
+        Ok(())
+    }    
+
+    
     #[serial]
     #[tokio::test]
     async fn test_get_err_not_found() -> Result<()>{

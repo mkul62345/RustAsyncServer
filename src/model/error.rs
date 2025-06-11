@@ -1,3 +1,4 @@
+use modql::filter::IntoSeaError;
 use serde::Serialize;
 use serde_with::{serde_as, DisplayFromStr};
 use crate::{crypt, model::store};
@@ -8,6 +9,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize)]
 pub enum Error {
     EntityNotFound { entity: &'static str, id: i64},
+    ListLimitOverMax { max: i64, actual: i64},
 
     // Modules
     Crypt(crypt::Error),
@@ -15,11 +17,25 @@ pub enum Error {
 
     // Externals
     Sqlx(#[serde_as(as = "DisplayFromStr")] sqlx::Error),
-    SeaQuery(#[serde_as(as = "DisplayFromStr")] sea_query::error::Error)
+    SeaQuery(#[serde_as(as = "DisplayFromStr")] sea_query::error::Error),
+    ModqlIntoSea(#[serde_as(as = "DisplayFromStr")] modql::filter::IntoSeaError),
+    SerdeJson(#[serde_as(as = "DisplayFromStr")] serde_json::Error)
     
 }
 
 // region: From Impls
+impl From<serde_json::Error> for Error {
+    fn from(val: serde_json::Error) -> Self {
+        Self::SerdeJson(val)
+    }
+}
+
+impl From<modql::filter::IntoSeaError> for Error {
+    fn from(val: modql::filter::IntoSeaError) -> Self {
+        Self::ModqlIntoSea(val)
+    }
+}
+
 impl From<sea_query::error::Error> for Error {
     fn from(val: sea_query::error::Error) -> Self {
         Self::SeaQuery(val)

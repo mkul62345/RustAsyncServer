@@ -1,14 +1,14 @@
 use std::sync::Arc;
-use crate::web::{mw_auth::CtxW, rpc::task_rpc::update_task};
 use axum::{body, extract::State, response::{IntoResponse, Response}, routing::post, Json, Router};
 use serde::Deserialize;
 use serde_json::{from_value, json, to_value, Value};
 use task_rpc::delete_task;
 use tracing::debug;
-
+use crate::web::{mw_auth::CtxW, rpc::task_rpc::update_task};
 use crate::web::rpc::task_rpc::{list_tasks, create_task};
 use crate::{ctx::Ctx, model::ModelManager, web::{Error, Result}};
 
+mod params;
 mod task_rpc;
 
 // region: RPC Types
@@ -23,22 +23,6 @@ struct RpcRequest {
     id: Option<Value>,
     method: String,
     params: Option<Value>,
-}
-
-#[derive(Deserialize)]
-pub struct ParamsForCreate<D> {
-    data: D,
-}
-
-#[derive(Deserialize)]
-pub struct ParamsForUpdate<D> {
-    id: i64,
-    data: D,
-}
-
-#[derive(Deserialize)]
-pub struct ParamsById {
-    id: i64,
 }
 // endregion: RPC Types
 
@@ -101,7 +85,7 @@ async fn _rpc_handler(
         // Task RPC methods.
         "create_task" => exec_rpc_fn!(create_task, ctx, mm, rpc_params),
 
-        "list_tasks" => exec_rpc_fn!(list_tasks, ctx, mm),
+        "list_tasks" => exec_rpc_fn!(list_tasks, ctx, mm, rpc_params),
 
         "update_task" => exec_rpc_fn!(update_task, ctx, mm, rpc_params),
 

@@ -51,25 +51,7 @@ pub async fn init_dev_db() -> Result<(), Box<dyn std::error::Error>>{
         .await?
         .unwrap();
 
-    /* // This works, the function in the bottom does nothing somewhy with the same code.
-    let db = mm.db();
-    let sql = format!(r#"UPDATE "user" SET "pwd" = $1 WHERE "id" = $2"#);  
-
-    let pwd = pwd::encrypt_pwd(&EncryptContent{
-            content: "jeff".to_string(),
-            salt: "jeff".to_string()
-        })?;
-
-    let res = sqlx::query(&sql)
-        .bind(pwd.to_string())
-        .bind(demo1_user.id)
-        .execute(db)
-        .await?;
-    */
-   
-    //TODO: Make this work, currently does nothing and postgres pops an error on some SELECT * FROM user WHERE id \ ID doesnt exist
-    UserBackendModelController::update_pwd(&ctx, &mm, demo1_user.id, DEMO_PWD);
-
+    UserBackendModelController::update_pwd(&ctx, &mm, demo1_user.id, DEMO_PWD).await?;
     info!("{:<12} - init_dev_db() - set demo1 pwd", "FOR-DEV-ONLY");
 
     Ok(())
